@@ -1,57 +1,63 @@
 import random
-
+  
 class Perceptron:
-    def __init__(self,input_number,step_size=0.1):
-    self._ins = input_number # Número de parámetros de entrada
+  
+    def __init__(self, learn_speed, num_weights):
+        
+        self.speed = learn_speed
     
-    # Seleccionamos pesos aleatorios
-    self._w = [random.random() for _ in range(input_number)]
-    self._eta = step_size # La tasa de convergencia
+        self.weights = []
+        for x in range(0, num_weights):
+            self.weights.append(random.random()*2-1)
     
-    def predict(self,inputs):
-        # Producto punto de entrada y pesos
-        weighted_average = sum(w*elm for w,elm in zip(self._w,inputs))
-        if weighted_average > 0:
+    def feed_forward(self, inputs):
+        sum = 0
+        # multiply inputs by weights and sum them
+        for x in range(0, len(self.weights)):
+            sum += self.weights[x] * inputs[x]
+        # return the 'activated' sum
+        return self.activate(sum)
+      
+    def activate(self, num):
+    # turn a sum over 0 into 1, and below 0 into -1
+        if num > 0:
             return 1
-        return 0
+        return -1
     
-    def train(self,inputs,ex_output):
-        output = self.predict(inputs)
-        error = ex_output - output
-        # El error es la diferencia entre la salida correcta y la esperada
-        if error != 0:
-            self._w = [w+self._eta*error*x for w,x in
-            zip(self._w,inputs)]
-        return error
+    def train(self, inputs, desired_output):
+        guess = self.feed_forward(inputs)
+        error = desired_output - guess
+      
+        for x in range(0, len(self.weights)):
+            self.weights[x] += error*inputs[x]*self.speed
+In [ ]:
+
+class Trainer:
     
-#!/usr/bin/env python
-from perceptron import Perceptron
+    def __init__(self):
+        self.perceptron = Perceptron(0.01, 3)
+      
+    def f(self, x):
+        return 0.5*x + 10 # line: f(x) = 0.5x + 10
+      
+    def train(self):
+        for x in range(0, 1000000):
+            x_coord = random.random()*500-250
+            y_coord = random.random()*500-250
+            line_y = self.f(x_coord)
+        
+        if y_coord > line_y: # above the line
+            answer = 1
+            self.perceptron.train([x_coord, y_coord,1], answer)
+        else: # below the line
+            answer = -1
+            self.perceptron.train([x_coord, y_coord,1], answer)
+        return self.perceptron # return our trained perceptron
+In [*]:
 
-## Datos de hombres y mujeres
-input_data = [[1.7,56,1], # Mujer de 1.70m y 56kg
-              [1.72,63,0],# Hombre de 1.72m y 63kg
-              [1.6,50,1], # Mujer de 1.60m y 50kg
-              [1.7,63,0], # Hombre de 1.70m y 63kg
-              [1.74,66,0],# Hombre de 1.74m y 66kg
-              [1.58,55,1],# Mujer de 1.58m y 55kg
-              [1.83,80,0],# Hombre de 1.83m y 80kg
-              [1.82,70,0],# Hombre de 1.82m y 70kg
-              [1.65,54,1]]# Mujer de 1.65m y 54kg
+trainer = Trainer()
+p = trainer.train()
+In [ ]:
 
-## Creamos el perceptron
-pr = Perceptron(3) # Perceptron con 3 entradas
-
-## Fase de entrenamiento
-for _ in range(100):
-    # Vamos a entrenarlo varias veces sobre los mismos datos
-    # para que los 'pesos' converjan
-    for person in input_data:
-        output = person[-1]
-        inp = [1] + person[0:-1] # Agregamos un uno por default
-        err = pr.train(inp,output)
-
-h = float(raw_input("Introduce tu estatura en centimetros.- "))
-w = float(raw_input("Introduce tu peso en kilogramos.- "))
-
-if pr.predict([1,h,2]) == 1: print "Mujer"
-else: print "Hombre"
+print "(-7, 9): " + p.feed_forward([-7,9,1])
+print "(3, 1): " + p.feed_forward([3,1,1])
